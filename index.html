@@ -293,35 +293,51 @@ button:hover { background: #142035; border-color: var(--accent2) }
 
 /* Tableau */
 .tablewrap {
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
   max-height: 64vh;
   border-radius: 10px;
   border: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch;
 }
 table {
   border-collapse: separate;
   border-spacing: 0;
-  min-width: 780px;
   width: 100%;
+  table-layout: fixed;
 }
+/* Largeurs colonnes : heure fixe, reste se partage */
+col.c-heure { width: 82px }
+col.c-temp  { width: 46px }
+col.c-vent  { width: 40px }
+col.c-raf   { width: 64px }
+col.c-pluie { width: 40px }
+col.c-cumul { width: 40px }
+col.c-ciel  { width: 30px }
+col.c-cc    { width: 36px }
+col.c-cape  { width: 44px }
+
 th, td {
-  padding: 7px 9px;
+  padding: 6px 4px;
   text-align: center;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
   background: var(--surface);
+  overflow: hidden;
+  font-size: 12px;
 }
 thead th {
   position: sticky;
   top: 0;
   z-index: 5;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: var(--muted);
   background: #0a1625;
   border-bottom: 1px solid var(--border2);
   text-transform: uppercase;
-  letter-spacing: .06em;
+  letter-spacing: .04em;
+  padding: 5px 4px;
 }
 td:first-child, th:first-child {
   position: sticky;
@@ -330,23 +346,30 @@ td:first-child, th:first-child {
   z-index: 4;
   background: var(--surface);
   border-right: 1px solid var(--border);
+  padding-left: 7px;
 }
 thead th:first-child { z-index: 7; background: #0a1625 }
 
-tr.row-now td { background: #0f2235 }
+tr.row-now td             { background: #0f2235 }
 tr.row-now td:first-child { background: #0f2235 }
 
-.cell-time { font-size: 11px; padding: 5px 7px !important }
-.cell-day  { font-size: 9px; color: var(--muted); white-space: nowrap }
-.cell-hr   { font-weight: 700; font-size: 12px }
-.cell-temp { font-weight: 700 }
-.cell-wind { font-weight: 900; font-size: 16px; color: var(--accent) }
-.cell-gust-wrap { display: flex; align-items: center; justify-content: center; gap: 5px }
-.cell-gust { font-weight: 800; color: var(--gust) }
-.dir-arrow { flex-shrink: 0; display: block }
-.cell-rain { color: var(--rain) }
-.cell-cc   { color: var(--muted) }
-.cell-cape { color: var(--warn) }
+/* Cellule heure : tout sur une ligne, petit */
+.cell-time { line-height: 1.3 }
+.cell-day  { font-size: 9px; color: var(--muted) }
+.cell-hr   { font-size: 12px; font-weight: 800; display: block }
+
+.cell-temp { font-weight: 700; font-size: 12px }
+.cell-wind { font-weight: 900; font-size: 15px; color: var(--accent) }
+
+/* Raf + flèche dans même cellule */
+.cell-gust-wrap { display: flex; align-items: center; justify-content: center; gap: 3px }
+.cell-gust      { font-weight: 800; color: var(--gust); font-size: 13px }
+.dir-arrow      { flex-shrink: 0; display: block }
+
+.cell-rain { color: var(--rain); font-size: 11px }
+.cell-cc   { color: var(--muted); font-size: 11px }
+.cell-cape { color: var(--warn);  font-size: 11px }
+.badge-snow { color: #b0d8ff; font-size: 10px; font-weight: 700 }
 
 /* Status bar */
 #status-bar {
@@ -526,15 +549,26 @@ tr.row-now td:first-child { background: #0f2235 }
     <b style="font-size:13px">Prévisions heure par heure</b>
     <div class="tablewrap" style="margin-top:8px">
       <table>
+        <colgroup>
+          <col class="c-heure">
+          <col class="c-temp">
+          <col class="c-vent">
+          <col class="c-raf">
+          <col class="c-pluie">
+          <col class="c-cumul">
+          <col class="c-ciel">
+          <col class="c-cc">
+          <col class="c-cape">
+        </colgroup>
         <thead>
           <tr>
             <th>Heure</th>
             <th>°C</th>
             <th>Vent</th>
-            <th>Raf. / Dir.</th>
+            <th>Raf▸Dir</th>
             <th>Pluie</th>
-            <th>Cumul</th>
-            <th>Ciel</th>
+            <th>Cum.</th>
+            <th>☁</th>
             <th>%☁</th>
             <th>CAPE</th>
           </tr>
@@ -754,13 +788,12 @@ function setRange(h, btn) {
   renderTable();
 }
 
-// Flèche SVG direction vent (pointe dans la direction d'où vient le vent)
+// Flèche SVG direction vent (pointe vers où souffle le vent)
 function dirArrow(deg) {
   if (!Number.isFinite(+deg)) return '';
-  // On fait pivoter la flèche : 0° = N (vers le haut), rotation = deg
-  return `<svg class="dir-arrow" width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"
-    style="transform:rotate(${+deg}deg);transform-origin:center">
-    <polygon points="9,1 13,15 9,12 5,15" fill="#7b92b2" opacity="0.9"/>
+  return `<svg class="dir-arrow" width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg"
+    style="transform:rotate(${+deg}deg);transform-origin:center;vertical-align:middle">
+    <polygon points="7,1 10,12 7,9.5 4,12" fill="#7b92b2" opacity="0.9"/>
   </svg>`;
 }
 
@@ -775,7 +808,7 @@ function renderTable() {
     cum += precip;
     const d   = new Date(h.time[j]);
     // Heure compacte sur une ligne : "sa. 12 22:00"
-    const dayShort = d.toLocaleDateString('fr-FR', { weekday:'short' }).replace('.','');
+    const dayShort = d.toLocaleDateString('fr-FR', { weekday:'short' }).replace('.','').replace('.','');
     const dayNum   = d.getDate();
     const hrStr    = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
     const sky    = skyCondition(h, j);
@@ -788,7 +821,7 @@ function renderTable() {
       : num(cum, 1);
     const windDeg = +h.wind_direction_10m[j];
     out += `<tr class="${isNow ? 'row-now' : ''}">
-      <td class="cell-time"><span class="cell-day">${dayShort} ${dayNum}</span> <span class="cell-hr">${hrStr}</span></td>
+      <td class="cell-time"><span class="cell-day">${dayShort} ${dayNum}</span><span class="cell-hr">${hrStr}</span></td>
       <td class="cell-temp">${num(h.temperature_2m[j], 1)}°</td>
       <td class="cell-wind">${num(h.wind_speed_10m[j])}</td>
       <td><div class="cell-gust-wrap"><span class="cell-gust">${num(h.wind_gusts_10m[j])}</span>${dirArrow(windDeg)}</div></td>
@@ -915,7 +948,7 @@ function locate(manual = false) {
       p => {
         $('lat').value = p.coords.latitude.toFixed(4);
         $('lon').value = p.coords.longitude.toFixed(4);
-        $('spot-name').textContent = 'Ma position V2';
+        $('spot-name').textContent = 'Ma position';
         saveState();
         initMap();
         marker.setLatLng([+$('lat').value, +$('lon').value]);
