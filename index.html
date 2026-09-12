@@ -257,8 +257,8 @@ button:hover { background: #142035; border-color: var(--accent2) }
 
 /* Carte */
 #map {
-  height: min(52vh, 480px);
-  min-height: 280px;
+  height: min(36vh, 300px);
+  min-height: 200px;
   border-radius: 10px;
   border: 1px solid var(--border);
 }
@@ -336,13 +336,14 @@ thead th:first-child { z-index: 7; background: #0a1625 }
 tr.row-now td { background: #0f2235 }
 tr.row-now td:first-child { background: #0f2235 }
 
-.cell-time { font-size: 12px; }
-.cell-day  { font-size: 10px; color: var(--muted); display: block }
-.cell-hr   { font-weight: 700 }
+.cell-time { font-size: 11px; padding: 5px 7px !important }
+.cell-day  { font-size: 9px; color: var(--muted); white-space: nowrap }
+.cell-hr   { font-weight: 700; font-size: 12px }
 .cell-temp { font-weight: 700 }
 .cell-wind { font-weight: 900; font-size: 16px; color: var(--accent) }
+.cell-gust-wrap { display: flex; align-items: center; justify-content: center; gap: 5px }
 .cell-gust { font-weight: 800; color: var(--gust) }
-.cell-dir  { font-size: 15px }
+.dir-arrow { flex-shrink: 0; display: block }
 .cell-rain { color: var(--rain) }
 .cell-cc   { color: var(--muted) }
 .cell-cape { color: var(--warn) }
@@ -467,25 +468,34 @@ tr.row-now td:first-child { background: #0f2235 }
 <main id="main-content">
 
   <!-- Spot -->
-  <div class="section">
-    <div class="spot-name" id="spot-name">Position GPS</div>
-    <div class="spot-sub" id="spot-sub">Initialisation…</div>
-    <div class="btn-row">
-      <button class="btn-primary" onclick="locate(true)">📍 GPS</button>
-      <button onclick="save()">⭐ Sauver</button>
-      <button onclick="renameSpot()">✏️ Renommer</button>
-      <button onclick="mapExternal()">↗ Météociel AROME</button>
-    </div>
-    <div class="coords-row">
-      <input id="lat" type="number" step=".0001" placeholder="Latitude" value="43.2965">
-      <input id="lon" type="number" step=".0001" placeholder="Longitude" value="5.3698">
+  <div class="section" style="padding:10px 14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div>
+        <div class="spot-name" id="spot-name">Position GPS</div>
+        <div class="spot-sub" id="spot-sub">Initialisation…</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
+        <span class="pill" id="pill-src">AROME HD</span>
+        <span class="pill" id="pill-refresh">—</span>
+      </div>
     </div>
     <div class="btn-row" style="margin-top:8px">
-      <button class="btn-primary" onclick="loadSpot(true)">Actualiser</button>
+      <button class="btn-primary" onclick="locate(true)">📍 GPS</button>
+      <button class="btn-primary" onclick="loadSpot(true)">↻ Actualiser</button>
+      <button onclick="save()">⭐ Sauver</button>
+      <button onclick="renameSpot()">✏️ Renommer</button>
+      <button onclick="toggleCoords()" id="btn-coords">⚙ Coords</button>
+      <button onclick="mapExternal()">↗ Météociel</button>
     </div>
-    <div id="status-bar">
-      <span class="pill" id="pill-src">AROME HD</span>
-      <span class="pill" id="pill-refresh">—</span>
+    <!-- Coords repliables -->
+    <div id="coords-panel" style="display:none;margin-top:8px">
+      <div class="coords-row">
+        <input id="lat" type="number" step=".0001" placeholder="Latitude" value="43.2965">
+        <input id="lon" type="number" step=".0001" placeholder="Longitude" value="5.3698">
+      </div>
+      <div class="btn-row" style="margin-top:6px">
+        <button class="btn-primary" onclick="loadSpot(true);toggleCoords()">Valider</button>
+      </div>
     </div>
   </div>
 
@@ -519,14 +529,13 @@ tr.row-now td:first-child { background: #0f2235 }
         <thead>
           <tr>
             <th>Heure</th>
-            <th>Temp.</th>
+            <th>°C</th>
             <th>Vent</th>
-            <th>Raf.</th>
-            <th>Dir.</th>
+            <th>Raf. / Dir.</th>
             <th>Pluie</th>
             <th>Cumul</th>
             <th>Ciel</th>
-            <th>Nuages</th>
+            <th>%☁</th>
             <th>CAPE</th>
           </tr>
         </thead>
@@ -573,6 +582,10 @@ function save() { saveState(); }
 function renameSpot() {
   const x = prompt('Nom du spot', $('spot-name').textContent);
   if (x) { $('spot-name').textContent = x; saveState(); updateWidget(); }
+}
+function toggleCoords() {
+  const p = $('coords-panel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
 }
 
 /* ── CARTE ───────────────────────────────────────────── */
@@ -741,6 +754,16 @@ function setRange(h, btn) {
   renderTable();
 }
 
+// Flèche SVG direction vent (pointe dans la direction d'où vient le vent)
+function dirArrow(deg) {
+  if (!Number.isFinite(+deg)) return '';
+  // On fait pivoter la flèche : 0° = N (vers le haut), rotation = deg
+  return `<svg class="dir-arrow" width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"
+    style="transform:rotate(${+deg}deg);transform-origin:center">
+    <polygon points="9,1 13,15 9,12 5,15" fill="#7b92b2" opacity="0.9"/>
+  </svg>`;
+}
+
 function renderTable() {
   if (!D) return;
   const h = D.hourly;
@@ -751,23 +774,24 @@ function renderTable() {
     const snow   = +h.snowfall[j] || 0;
     cum += precip;
     const d   = new Date(h.time[j]);
-    const day = d.toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit' });
-    const hr  = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-    const sky = skyCondition(h, j);
-    const isNow = j === startIdx;
-    // Pluie/neige dans tableau
+    // Heure compacte sur une ligne : "sa. 12 22:00"
+    const dayShort = d.toLocaleDateString('fr-FR', { weekday:'short' }).replace('.','');
+    const dayNum   = d.getDate();
+    const hrStr    = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const sky    = skyCondition(h, j);
+    const isNow  = j === startIdx;
     const precipCell = snow > 0
       ? `<span class="badge-snow">❄️ ${num(snow,1)}cm</span>`
-      : `${num(precip, 1)}`;
+      : num(precip, 1);
     const cumCell = snow > 0
       ? `<span style="color:var(--muted)">—</span>`
       : num(cum, 1);
+    const windDeg = +h.wind_direction_10m[j];
     out += `<tr class="${isNow ? 'row-now' : ''}">
-      <td class="cell-time"><span class="cell-day">${day}</span><span class="cell-hr">${hr}</span></td>
+      <td class="cell-time"><span class="cell-day">${dayShort} ${dayNum}</span> <span class="cell-hr">${hrStr}</span></td>
       <td class="cell-temp">${num(h.temperature_2m[j], 1)}°</td>
       <td class="cell-wind">${num(h.wind_speed_10m[j])}</td>
-      <td class="cell-gust">${num(h.wind_gusts_10m[j])}</td>
-      <td class="cell-dir">${dir(h.wind_direction_10m[j])}</td>
+      <td><div class="cell-gust-wrap"><span class="cell-gust">${num(h.wind_gusts_10m[j])}</span>${dirArrow(windDeg)}</div></td>
       <td class="cell-rain">${precipCell}</td>
       <td class="cell-rain">${cumCell}</td>
       <td style="font-size:18px" title="${sky.label}">${sky.icon}</td>
