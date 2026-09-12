@@ -915,7 +915,7 @@ function locate(manual = false) {
       p => {
         $('lat').value = p.coords.latitude.toFixed(4);
         $('lon').value = p.coords.longitude.toFixed(4);
-        $('spot-name').textContent = 'Ma position';
+        $('spot-name').textContent = 'Ma position V2';
         saveState();
         initMap();
         marker.setLatLng([+$('lat').value, +$('lon').value]);
