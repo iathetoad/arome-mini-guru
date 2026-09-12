@@ -1,1 +1,18 @@
-{"name":"AROME Mini-Guru V4","short_name":"AROME V4","start_url":"./","display":"standalone","background_color":"#080e1a","theme_color":"#0a1020","description":"Prévisions AROME HD façon Windguru avec carte animée."}
+{
+  "name": "AROME Mini-Guru",
+  "short_name": "AROME Guru",
+  "description": "Prévisions météo AROME HD 1,3 km façon Windguru",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#060d1a",
+  "theme_color": "#060d1a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%23060d1a'/><text x='96' y='130' font-size='100' text-anchor='middle'>🌦️</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
