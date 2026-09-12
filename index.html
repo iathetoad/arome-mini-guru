@@ -1,58 +1,70 @@
 <!doctype html><html lang="fr"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a1020"><link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<title>AROME Mini-Guru V3</title>
+<title>AROME Mini-Guru V4</title>
 <style>
-:root{--bg:#080e1a;--card:#101a2b;--card2:#17243a;--line:#273650;--txt:#f6f8fc;--muted:#92a1b9;--y:#ffd34d;--b:#79bdff}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:14px system-ui,sans-serif}
-header{position:sticky;top:0;z-index:5;background:#080e1af2;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:12px 14px}
-.top{display:flex;justify-content:space-between;align-items:center}.brand{font-weight:900;font-size:19px}.badge{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:6px 8px}
-main{max-width:1050px;margin:auto;padding:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:12px;margin:9px 0}
-.spot{font-size:23px;font-weight:900}.muted{font-size:11px;color:var(--muted)}
-.controls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.controls input{padding:10px;border-radius:9px;border:1px solid var(--line);background:var(--card2);color:var(--txt);min-width:0}
-button{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-weight:700;margin:7px 5px 0 0}.primary,.active{background:var(--y);color:#171717;border-color:var(--y)}
-.hourpick{display:flex;overflow:auto;gap:5px}.hourpick button{min-width:65px}.hourpick small{display:block;font-size:9px;font-weight:500}
-.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:11px}table{border-collapse:collapse;min-width:860px;width:100%}
-th,td{padding:7px 8px;text-align:center;border-bottom:1px solid #24324a;white-space:nowrap}th{font-size:10px;color:#c7d2e3;background:#162239}td:first-child,th:first-child{position:sticky;left:0;background:#111c30;text-align:left;z-index:1}.wind{font-weight:900}.gust{font-weight:800;color:var(--y)}.rain{color:var(--b)}.arrow{font-size:17px}
-#map{height:390px;border-radius:11px}.mapbar{margin-bottom:7px}.notice{font-size:12px;line-height:1.5;color:var(--muted)}
-@media(max-width:650px){#map{height:340px}.spot{font-size:21px}}
+:root{--bg:#080e1a;--card:#101a2b;--card2:#17243a;--line:#273650;--txt:#f6f8fc;--muted:#92a1b9;--y:#ffd34d;--b:#79bdff;--head:58px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--txt);font:14px system-ui,-apple-system,Segoe UI,sans-serif}
+header{position:sticky;top:0;z-index:1000;height:var(--head);background:#080e1af2;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:10px 14px}
+.top{display:flex;justify-content:space-between;align-items:center;height:100%}.brand{font-weight:900;font-size:19px}.badge{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:6px 8px}
+main{max-width:1100px;margin:auto;padding:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:12px;margin:9px 0}.spot{font-size:22px;font-weight:900}.muted{font-size:11px;color:var(--muted)}
+button{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-weight:700;margin:6px 5px 0 0}.primary,.active{background:var(--y);color:#171717;border-color:var(--y)}
+#map{height:min(56vh,520px);min-height:340px;border-radius:11px}.maptop{display:flex;gap:8px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:8px}.mapactions{display:flex;gap:4px;flex-wrap:wrap}.mapactions button{margin:0}
+.mapstatus{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}.pill{border:1px solid var(--line);background:#0c1525;border-radius:999px;padding:6px 9px;font-size:11px}.animbar{display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:center;margin-top:8px}.animbar button{margin:0}.animbar input{width:100%}.animtime{font-weight:800;min-width:125px;text-align:right}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.controls input{padding:10px;border-radius:9px;border:1px solid var(--line);background:var(--card2);color:var(--txt);min-width:0}.hourpick{display:flex;overflow:auto;gap:5px;padding-bottom:3px}.hourpick button{min-width:65px;margin:0}.hourpick small{display:block;font-size:9px;font-weight:500}
+.tablewrap{overflow:auto;max-height:68vh;border:1px solid var(--line);border-radius:11px;position:relative}table{border-collapse:separate;border-spacing:0;min-width:860px;width:100%}th,td{padding:8px;text-align:center;border-bottom:1px solid #24324a;white-space:nowrap;background:#101a2b}
+thead th{position:sticky;top:0;z-index:5;font-size:10px;color:#c7d2e3;background:#162239;box-shadow:0 1px 0 #2d3b55}td:first-child,th:first-child{position:sticky;left:0;text-align:left;z-index:4;background:#111c30}thead th:first-child{z-index:7;background:#162239}.wind{font-weight:900}.gust{font-weight:800;color:var(--y)}.rain{color:var(--b)}.arrow{font-size:17px}.notice{font-size:12px;line-height:1.5;color:var(--muted)}
+.wx-dot{display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid #ffffff88;color:white;font-weight:900;text-shadow:0 1px 2px #000;background:#2c6be6aa;box-shadow:0 0 0 1px #0005}.wx-arrow{font-size:17px;line-height:1;filter:drop-shadow(0 1px 1px #000)}
+@media(max-width:650px){:root{--head:56px}main{padding:7px}.card{padding:10px;margin:7px 0}#map{height:49vh;min-height:330px}.spot{font-size:20px}.animbar{grid-template-columns:auto 1fr}.animtime{grid-column:1/-1;text-align:left;min-width:0}.tablewrap{max-height:70vh}}
 </style></head><body>
-<header><div class="top"><div class="brand">🌦️ AROME Mini-Guru</div><div class="badge">V3 • AROME HD</div></div></header>
+<header><div class="top"><div class="brand">🌦️ AROME Mini-Guru</div><div class="badge">V4 • AROME HD</div></div></header>
 <main>
-<section class="card"><div class="spot" id="name">Mon spot</div><div class="muted" id="coords">43.2965, 5.3698</div>
-<div class="controls"><input id="lat" type="number" step=".0001" value="43.2965"><input id="lon" type="number" step=".0001" value="5.3698"></div>
-<button class="primary" onclick="load()">🔄 Actualiser</button><button onclick="locate()">📍 GPS</button><button onclick="save()">⭐ Sauver</button><button onclick="renameSpot()">✏️ Nom</button>
-<div class="muted" id="status">Chargement…</div></section>
+<section class="card">
+  <div class="maptop"><div><div class="spot" id="name">Position GPS</div><div class="muted" id="coords">Recherche de la position…</div></div><div class="mapactions"><button class="primary" onclick="locate(true)">📍 GPS</button><button onclick="center()">◎ Recentrer</button><button onclick="mapExternal()">↗ AROME détaillé</button></div></div>
+  <div id="map"></div>
+  <div class="animbar"><button id="play" class="primary" onclick="togglePlay()">▶</button><button onclick="reloadGrid()">↻ Carte</button><input id="slider" type="range" min="0" max="0" value="0" oninput="slide(this.value)"><div id="animtime" class="animtime">—</div></div>
+  <div class="mapstatus"><span class="pill" id="wxnow">AROME : chargement…</span><span class="pill">● taille/couleur = pluie • flèche = vent</span></div>
+  <div class="muted" style="margin-top:7px">Clique sur la carte ou déplace le marqueur pour choisir le spot. L’animation fait défiler les heures AROME ; la couche météo est échantillonnée sur la zone visible.</div>
+</section>
+
+<section class="card"><b>Spot</b><div class="controls"><input id="lat" type="number" step=".0001" value="43.2965"><input id="lon" type="number" step=".0001" value="5.3698"></div>
+<button class="primary" onclick="loadSpot(true)">🔄 Actualiser</button><button onclick="save()">⭐ Sauver</button><button onclick="renameSpot()">✏️ Nom</button><div class="muted" id="status">Initialisation…</div></section>
+
 <section class="card"><div class="hourpick" id="hours"></div></section>
-<section class="card"><b>Prévision — simple comme Windguru</b><div class="tablewrap" style="margin-top:9px"><table>
-<thead><tr><th>Heure</th><th>Temp.</th><th>Vent</th><th>Raf.</th><th>Dir.</th><th>Pluie</th><th>Cumul</th><th>Nuages</th><th>CAPE</th></tr></thead>
-<tbody id="rows"></tbody></table></div></section>
-<section class="card"><b>Carte interactive</b><div class="mapbar"><button onclick="mapExternal()">🗺️ Carte AROME détaillée</button><button onclick="center()">📍 Recentrer</button></div>
-<div id="map"></div><div class="muted" style="margin-top:7px">Clique sur la carte ou déplace le marqueur pour choisir ton spot. Les valeurs AROME de l'heure sélectionnée restent dans le tableau.</div></section>
-<section class="card"><div class="notice"><b style="color:#fff">V3 :</b> tableau compact, sélection horaire, carte Leaflet zoomable et déplacement du spot. Le fond est OpenStreetMap. Les prévisions utilisent AROME France HD via Open-Meteo. La carte AROME détaillée est ouverte depuis Météociel.</div></section>
+<section class="card"><b>Prévision — simple comme Windguru</b><div class="muted" style="margin:3px 0 8px">L’entête reste visible pendant le défilement du tableau.</div><div class="tablewrap"><table>
+<thead><tr><th>Heure</th><th>Temp.</th><th>Vent</th><th>Raf.</th><th>Dir.</th><th>Pluie</th><th>Cumul</th><th>Nuages</th><th>CAPE</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<section class="card"><div class="notice"><b style="color:#fff">V4 :</b> carte placée en premier, tentative GPS automatique au démarrage, animation temporelle AROME, couche météo AROME échantillonnée, tableau avec entête fixe. Les données viennent d’AROME France HD via Open-Meteo. La couche animée n’est pas le raster natif Météo-France : elle visualise un maillage de points AROME sur l’emprise de la carte.</div></section>
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-let D=null,start=0,selected=0,map,marker;
+let D=null,start=0,selected=0,map,marker,gridLayer,gridData=[],playing=false,timer=null,gridSeq=0,moveTimer=null;
 const $=x=>document.getElementById(x),dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
-const n=(v,d=0)=>v==null?'—':Number(v).toFixed(d),dir=v=>Number.isFinite(v)?dirs[Math.round(v/22.5)%16]:'—';
-function state(){localStorage.setItem('aromeV3',JSON.stringify({lat:$('lat').value,lon:$('lon').value,name:$('name').textContent}))}
-function restore(){try{let s=JSON.parse(localStorage.getItem('aromeV3'));if(s){$('lat').value=s.lat;$('lon').value=s.lon;$('name').textContent=s.name}}catch(e){}}
+const n=(v,d=0)=>v==null||!Number.isFinite(Number(v))?'—':Number(v).toFixed(d),dir=v=>Number.isFinite(Number(v))?dirs[Math.round(Number(v)/22.5)%16]:'—';
+function state(){localStorage.setItem('aromeV4',JSON.stringify({lat:$('lat').value,lon:$('lon').value,name:$('name').textContent}))}
+function restore(){try{let s=JSON.parse(localStorage.getItem('aromeV4'));if(s){$('lat').value=s.lat;$('lon').value=s.lon;$('name').textContent=s.name;return true}}catch(e){}return false}
 function save(){state();alert('Spot enregistré.')} function renameSpot(){let x=prompt('Nom du spot',$('name').textContent);if(x){$('name').textContent=x;state()}}
-function locate(){if(!navigator.geolocation)return alert('GPS indisponible');navigator.geolocation.getCurrentPosition(p=>{$('lat').value=p.coords.latitude.toFixed(4);$('lon').value=p.coords.longitude.toFixed(4);$('name').textContent='Ma position';state();load()},()=>alert('Autorise la localisation dans Chrome.'))}
-async function load(){let lat=Number($('lat').value),lon=Number($('lon').value);$('status').textContent='Récupération AROME France HD…';
-let v='temperature_2m,precipitation,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cape';
-let u=`https://api.open-meteo.com/v1/meteofrance?latitude=${lat}&longitude=${lon}&hourly=${v}&models=meteofrance_arome_france_hd&forecast_days=3&wind_speed_unit=kn&precipitation_unit=mm&timezone=auto`;
-try{let r=await fetch(u);if(!r.ok)throw Error('HTTP '+r.status);D=await r.json();start=0;while(start<D.hourly.time.length&&new Date(D.hourly.time[start])<new Date())start++;selected=start;$('coords').textContent=`${lat.toFixed(4)}, ${lon.toFixed(4)} • ${D.timezone||''}`;$('status').textContent='AROME HD • dernier run disponible • '+new Date().toLocaleTimeString('fr-FR');renderHours();renderTable();initMap()}catch(e){$('status').textContent='Erreur : '+e.message}}
-function renderHours(){let h=D.hourly,out='';for(let j=start;j<Math.min(start+48,h.time.length);j++){let d=new Date(h.time[j]);out+=`<button class="${j===selected?'active':''}" onclick="pick(${j})">${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}<small>${n(h.wind_speed_10m[j])} nd</small></button>`}$('hours').innerHTML=out}
-function pick(j){selected=j;renderHours();renderTable();updatePopup()}
-function renderTable(){let h=D.hourly,out='',cum=0;for(let j=start;j<Math.min(start+48,h.time.length);j++){cum+=Number(h.precipitation[j]||0);let d=new Date(h.time[j]);out+=`<tr><td>${d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit'})}<br><b>${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</b></td><td>${n(h.temperature_2m[j],1)}°</td><td class="wind">${n(h.wind_speed_10m[j])}</td><td class="gust">${n(h.wind_gusts_10m[j])}</td><td class="arrow">${dir(h.wind_direction_10m[j])}</td><td class="rain">${n(h.precipitation[j],1)}</td><td class="rain">${n(cum,1)}</td><td>${n(h.cloud_cover[j])}%</td><td>${n(h.cape[j])}</td></tr>`}$('rows').innerHTML=out}
-function initMap(){if(!map){map=L.map('map').setView([Number($('lat').value),Number($('lon').value)],9);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);marker=L.marker([Number($('lat').value),Number($('lon').value)],{draggable:true}).addTo(map);marker.on('dragend',moveSpot);map.on('click',e=>{marker.setLatLng(e.latlng);moveSpot()})}else updateMarker();updatePopup()}
-function moveSpot(){let p=marker.getLatLng();$('lat').value=p.lat.toFixed(4);$('lon').value=p.lng.toFixed(4);$('name').textContent='Spot carte';state();load()}
-function updateMarker(){marker.setLatLng([Number($('lat').value),Number($('lon').value)])}
-function center(){if(map){updateMarker();map.setView(marker.getLatLng(),Math.max(map.getZoom(),8))}}
-function updatePopup(){if(!map||!marker||!D)return;let h=D.hourly;marker.bindPopup(`<b>${$('name').textContent}</b><br>${new Date(h.time[selected]).toLocaleString('fr-FR')}<br>💨 ${n(h.wind_speed_10m[selected])} nd • raf. ${n(h.wind_gusts_10m[selected])} nd<br>🌧️ ${n(h.precipitation[selected],1)} mm`).openPopup()}
+function initMap(){if(map)return;map=L.map('map',{zoomControl:true}).setView([Number($('lat').value),Number($('lon').value)],9);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);gridLayer=L.layerGroup().addTo(map);marker=L.marker([Number($('lat').value),Number($('lon').value)],{draggable:true}).addTo(map);marker.on('dragend',moveSpot);map.on('click',e=>{marker.setLatLng(e.latlng);moveSpot()});map.on('moveend',()=>{clearTimeout(moveTimer);moveTimer=setTimeout(reloadGrid,500)})}
+function locate(manual=false){if(!navigator.geolocation){if(manual)alert('GPS indisponible.');return Promise.reject()};$('coords').textContent='Recherche de la position GPS…';return new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(p=>{$('lat').value=p.coords.latitude.toFixed(4);$('lon').value=p.coords.longitude.toFixed(4);$('name').textContent='Ma position';state();initMap();updateMarker();map.setView(marker.getLatLng(),10);loadSpot(true).then(resolve)},e=>{if(manual)alert('Autorise la localisation dans le navigateur.');reject(e)},{enableHighAccuracy:true,timeout:9000,maximumAge:300000}))}
+async function loadSpot(refreshGrid=false){let lat=Number($('lat').value),lon=Number($('lon').value);if(!Number.isFinite(lat)||!Number.isFinite(lon))return;$('status').textContent='Récupération AROME France HD…';let v='temperature_2m,precipitation,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cape';let u=`https://api.open-meteo.com/v1/meteofrance?latitude=${lat}&longitude=${lon}&hourly=${v}&models=meteofrance_arome_france_hd&forecast_days=3&wind_speed_unit=kn&precipitation_unit=mm&timezone=auto`;
+try{let r=await fetch(u);if(!r.ok)throw Error('HTTP '+r.status);D=await r.json();start=0;while(start<D.hourly.time.length-1&&new Date(D.hourly.time[start])<new Date())start++;selected=Math.max(start,Math.min(selected||start,D.hourly.time.length-1));$('coords').textContent=`${lat.toFixed(4)}, ${lon.toFixed(4)} • ${D.timezone||''}`;$('status').textContent='AROME HD • '+new Date().toLocaleTimeString('fr-FR');initMap();updateMarker();renderHours();renderTable();setupSlider();updatePopup();renderGrid();if(refreshGrid)reloadGrid()}catch(e){$('status').textContent='Erreur : '+e.message}}
+function renderHours(){if(!D)return;let h=D.hourly,out='';for(let j=start;j<Math.min(start+48,h.time.length);j++){let d=new Date(h.time[j]);out+=`<button class="${j===selected?'active':''}" onclick="pick(${j})">${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}<small>${n(h.wind_speed_10m[j])} nd</small></button>`}$('hours').innerHTML=out}
+function pick(j){selected=Number(j);renderHours();renderTable();setupSlider(false);updatePopup();renderGrid()}
+function renderTable(){if(!D)return;let h=D.hourly,out='',cum=0;for(let j=start;j<Math.min(start+48,h.time.length);j++){cum+=Number(h.precipitation[j]||0);let d=new Date(h.time[j]);out+=`<tr><td>${d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit'})}<br><b>${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</b></td><td>${n(h.temperature_2m[j],1)}°</td><td class="wind">${n(h.wind_speed_10m[j])}</td><td class="gust">${n(h.wind_gusts_10m[j])}</td><td class="arrow">${dir(h.wind_direction_10m[j])}</td><td class="rain">${n(h.precipitation[j],1)}</td><td class="rain">${n(cum,1)}</td><td>${n(h.cloud_cover[j])}%</td><td>${n(h.cape[j])}</td></tr>`}$('rows').innerHTML=out}
+function setupSlider(reset=true){if(!D)return;let s=$('slider');s.min=start;s.max=Math.min(start+47,D.hourly.time.length-1);s.value=selected;updateTimeLabel()}
+function slide(v){selected=Number(v);renderHours();renderTable();updatePopup();renderGrid();updateTimeLabel()}
+function updateTimeLabel(){if(!D)return;let d=new Date(D.hourly.time[selected]);$('animtime').textContent=d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}
+function togglePlay(){playing=!playing;$('play').textContent=playing?'⏸':'▶';if(playing){timer=setInterval(()=>{let s=$('slider'),v=Number(s.value)+1;if(v>Number(s.max))v=Number(s.min);s.value=v;slide(v)},850)}else{clearInterval(timer)}}
+function moveSpot(){let p=marker.getLatLng();$('lat').value=p.lat.toFixed(4);$('lon').value=p.lng.toFixed(4);$('name').textContent='Spot carte';state();loadSpot(false)}
+function updateMarker(){if(marker)marker.setLatLng([Number($('lat').value),Number($('lon').value)])}
+function center(){if(map){updateMarker();map.setView(marker.getLatLng(),Math.max(map.getZoom(),9))}}
+function updatePopup(){if(!map||!marker||!D)return;let h=D.hourly;marker.bindPopup(`<b>${$('name').textContent}</b><br>${new Date(h.time[selected]).toLocaleString('fr-FR')}<br>💨 ${n(h.wind_speed_10m[selected])} nd • raf. ${n(h.wind_gusts_10m[selected])} nd<br>🌧️ ${n(h.precipitation[selected],1)} mm`).openPopup();$('wxnow').textContent=`💨 ${n(h.wind_speed_10m[selected])} nd  •  raf. ${n(h.wind_gusts_10m[selected])}  •  🌧 ${n(h.precipitation[selected],1)} mm`}
 function mapExternal(){window.open('https://www.meteociel.fr/modeles/aromezoom.php','_blank')}
-restore();load();
+function rainColor(v){v=Number(v)||0;if(v<0.1)return '#4a8fd733';if(v<0.5)return '#4a8fd799';if(v<2)return '#2674e8cc';if(v<5)return '#8c55dccc';return '#e64d6dcc'}
+function renderGrid(){if(!gridLayer||!gridData.length||!D)return;gridLayer.clearLayers();let targetTime=D.hourly.time[selected];for(const g of gridData){let idx=g.hourly.time.indexOf(targetTime);if(idx<0)continue;let rain=Number(g.hourly.precipitation[idx]||0),wind=Number(g.hourly.wind_speed_10m[idx]||0),deg=Number(g.hourly.wind_direction_10m[idx]||0);let size=Math.max(18,Math.min(42,18+rain*5));let icon=L.divIcon({className:'',iconSize:[size,size],iconAnchor:[size/2,size/2],html:`<div class="wx-dot" style="width:${size}px;height:${size}px;background:${rainColor(rain)}"><span class="wx-arrow" style="transform:rotate(${deg+180}deg)">↑</span></div>`});L.marker([g.latitude,g.longitude],{icon,interactive:false}).addTo(gridLayer)}updateTimeLabel()}
+async function reloadGrid(){if(!map||!D)return;let seq=++gridSeq,b=map.getBounds(),rows=5,cols=5,lats=[],lons=[];for(let r=0;r<rows;r++){let lat=b.getSouth()+(b.getNorth()-b.getSouth())*r/(rows-1);for(let c=0;c<cols;c++){let lon=b.getWest()+(b.getEast()-b.getWest())*c/(cols-1);lats.push(lat.toFixed(4));lons.push(lon.toFixed(4))}}$('wxnow').textContent='Chargement de la couche AROME…';let vars='precipitation,wind_speed_10m,wind_direction_10m';let u=`https://api.open-meteo.com/v1/meteofrance?latitude=${lats.join(',')}&longitude=${lons.join(',')}&hourly=${vars}&models=meteofrance_arome_france_hd&forecast_days=3&wind_speed_unit=kn&precipitation_unit=mm&timezone=auto`;
+try{let r=await fetch(u);if(!r.ok)throw Error('HTTP '+r.status);let x=await r.json();if(seq!==gridSeq)return;gridData=Array.isArray(x)?x:[x];renderGrid();updatePopup()}catch(e){if(seq===gridSeq){gridData=[];gridLayer.clearLayers();$('wxnow').textContent='Couche carte indisponible • prévision du spot OK'}}}
+async function boot(){let hadSaved=restore();initMap();try{await locate(false)}catch(e){if(hadSaved){$('coords').textContent='GPS non autorisé • spot enregistré';}else{$('name').textContent='Spot par défaut';$('coords').textContent='GPS non autorisé • utilise 📍 GPS ou clique sur la carte';}await loadSpot(true)}}
+boot();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script></body></html>
