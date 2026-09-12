@@ -118,10 +118,45 @@ body {
 }
 .w-label { color: var(--muted); min-width: 30px; font-size: 11px }
 .w-val { font-weight: 700; font-size: 14px }
-.c-acc { color: var(--accent) }
+.c-acc  { color: var(--accent) }
 .c-gust { color: var(--gust) }
 .c-rain { color: var(--rain) }
 .c-warn { color: var(--warn) }
+.c-sun  { color: #ffd966 }
+.c-cloud{ color: #a0b8d4 }
+
+/* Condition ciel */
+.w-sky {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border);
+}
+.w-sky-icon { font-size: 26px; line-height: 1; flex-shrink: 0 }
+.w-sky-detail { display: flex; flex-direction: column; gap: 2px }
+.w-sky-label { font-size: 13px; font-weight: 700 }
+.w-sky-sub   { font-size: 10px; color: var(--muted) }
+.w-cloud-bar {
+  height: 4px;
+  width: 80px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 3px;
+}
+.w-cloud-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #4a7aaa, #a0c4e8);
+  transition: width .4s;
+}
+
+/* Strip : icône condition sous le vent */
+.w-hcc   { font-size: 11px; line-height: 1 }
+.w-hrain { font-size: 9px; color: var(--rain); font-weight: 700 }
+.badge-snow { color: #b0d8ff; font-size: 10px; font-weight: 700 }
 
 /* Barre de prévision horaire mini */
 .w-strip {
@@ -410,8 +445,17 @@ tr.row-now td:first-child { background: #0f2235 }
         <div class="w-row">
           <span class="w-label">Pluie</span>
           <span class="w-val c-rain" id="w-rain">—</span>
-          <span class="w-label" style="color:var(--muted)">mm/h</span>
+          <span class="w-label" id="w-rain-unit" style="color:var(--muted)">mm/h</span>
         </div>
+      </div>
+    </div>
+    <!-- Condition ciel -->
+    <div class="w-sky" id="w-sky">
+      <div class="w-sky-icon" id="w-sky-icon">—</div>
+      <div class="w-sky-detail">
+        <div class="w-sky-label" id="w-sky-label">—</div>
+        <div class="w-sky-sub" id="w-sky-sub"></div>
+        <div class="w-cloud-bar"><div class="w-cloud-fill" id="w-cloud-fill" style="width:0%"></div></div>
       </div>
     </div>
     <!-- Strip horaire -->
@@ -481,6 +525,7 @@ tr.row-now td:first-child { background: #0f2235 }
             <th>Dir.</th>
             <th>Pluie</th>
             <th>Cumul</th>
+            <th>Ciel</th>
             <th>Nuages</th>
             <th>CAPE</th>
           </tr>
@@ -491,7 +536,7 @@ tr.row-now td:first-child { background: #0f2235 }
   </div>
 
   <div class="section" style="color:var(--muted);font-size:11px;line-height:1.6">
-    V5 · AROME France HD 1,3 km via Open-Meteo · PWA installable sur Android (Chrome → Ajouter à l'écran d'accueil). Le widget en haut reste visible pendant le défilement.
+    V5.1 · AROME France HD 1,3 km via Open-Meteo · PWA installable sur Android (Chrome → Ajouter à l'écran d'accueil). Widget sticky avec condition ciel (soleil, nuages, pluie, neige, orage), strip horaire avec icône météo et indicateur neige/pluie.
   </div>
 
 </main>
@@ -566,7 +611,7 @@ async function loadSpot(refreshGrid = false) {
   const lat = +$('lat').value, lon = +$('lon').value;
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
   $('spot-sub').textContent = 'Récupération AROME France HD…';
-  const vars = 'temperature_2m,precipitation,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cape';
+  const vars = 'temperature_2m,precipitation,rain,snowfall,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cape';
   const url  = `https://api.open-meteo.com/v1/meteofrance?latitude=${lat}&longitude=${lon}&hourly=${vars}&models=meteofrance_arome_france_hd&forecast_days=3&wind_speed_unit=kn&precipitation_unit=mm&timezone=auto`;
   try {
     const r = await fetch(url);
@@ -591,33 +636,94 @@ async function loadSpot(refreshGrid = false) {
   }
 }
 
+/* ── LOGIQUE CIEL ────────────────────────────────────── */
+// Retourne { icon, label, sub, color } à partir des données brutes pour un indice j
+function skyCondition(h, j) {
+  const cc    = +h.cloud_cover[j]  || 0;   // %
+  const rain  = +h.precipitation[j]|| 0;   // mm/h total
+  const snow  = +h.snowfall[j]     || 0;   // cm/h
+  const cape  = +h.cape[j]         || 0;   // J/kg
+  const temp  = +h.temperature_2m[j];
+
+  // Neige (snowfall > 0 ou précipitations avec T < 1°)
+  if (snow > 0 || (rain > 0.1 && temp < 1)) {
+    if (snow > 1 || rain > 2)
+      return { icon:'❄️', label:'Chutes de neige', sub:`${snow > 0 ? num(snow,1)+' cm/h' : num(rain,1)+' mm/h'}`, color:'#b0d8ff' };
+    return { icon:'🌨️', label:'Neige faible', sub:`${snow > 0 ? num(snow,1)+' cm/h' : ''}`, color:'#c8e8ff' };
+  }
+
+  // Orage (CAPE élevée + pluie)
+  if (cape > 500 && rain > 0.5)
+    return { icon:'⛈️', label:'Orage probable', sub:`CAPE ${Math.round(cape)} J/kg · ${num(rain,1)} mm/h`, color:'#ff8040' };
+  if (cape > 200 && rain > 0.1)
+    return { icon:'🌩️', label:'Risque orageux', sub:`CAPE ${Math.round(cape)} J/kg`, color:'#ffc840' };
+
+  // Pluie
+  if (rain > 5)  return { icon:'🌧️', label:'Forte pluie', sub:`${num(rain,1)} mm/h`, color:'#4da6ff' };
+  if (rain > 1)  return { icon:'🌧️', label:'Pluie modérée', sub:`${num(rain,1)} mm/h`, color:'#79bdff' };
+  if (rain > 0.1)return { icon:'🌦️', label:'Pluie faible', sub:`${num(rain,1)} mm/h`, color:'#8ec8ff' };
+
+  // Nuages
+  if (cc >= 88)  return { icon:'☁️',  label:'Couvert', sub:`${cc}% de nuages`, color:'#8899bb' };
+  if (cc >= 63)  return { icon:'🌥️', label:'Très nuageux', sub:`${cc}% de nuages`, color:'#9aaabb' };
+  if (cc >= 38)  return { icon:'⛅',  label:'Nuageux', sub:`${cc}% de nuages`, color:'#aabbcc' };
+  if (cc >= 13)  return { icon:'🌤️', label:'Peu nuageux', sub:`${cc}% de nuages`, color:'#ffd966' };
+  return           { icon:'☀️',  label:'Ensoleillé', sub:'Ciel dégagé', color:'#ffd34d' };
+}
+
 /* ── WIDGET ──────────────────────────────────────────── */
 function updateWidget() {
   if (!D) return;
   const h = D.hourly, i = selected;
+
+  // Infos de base
   $('w-spot').textContent = $('spot-name').textContent;
   $('w-time').textContent = fmtTime(h.time[i], { weekday:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' });
-  $('w-temp').innerHTML = `${num(h.temperature_2m[i], 1)}<sup>°</sup>`;
+  $('w-temp').innerHTML   = `${num(h.temperature_2m[i], 1)}<sup>°</sup>`;
   $('w-wind').textContent = num(h.wind_speed_10m[i]);
   $('w-dir').textContent  = dir(h.wind_direction_10m[i]);
   $('w-gust').textContent = num(h.wind_gusts_10m[i]);
-  $('w-rain').textContent = num(h.precipitation[i], 1);
 
-  // Strip horaire : 8 prochaines heures
+  // Pluie : si neige, afficher neige
+  const snow = +h.snowfall[i] || 0;
+  const rain = +h.precipitation[i] || 0;
+  if (snow > 0) {
+    $('w-rain').textContent      = num(snow, 1);
+    $('w-rain-unit').textContent = 'cm/h ❄️';
+  } else {
+    $('w-rain').textContent      = num(rain, 1);
+    $('w-rain-unit').textContent = 'mm/h';
+  }
+
+  // Condition ciel
+  const sky = skyCondition(h, i);
+  $('w-sky-icon').textContent  = sky.icon;
+  $('w-sky-label').textContent = sky.label;
+  $('w-sky-label').style.color = sky.color;
+  $('w-sky-sub').textContent   = sky.sub;
+  $('w-cloud-fill').style.width= (+h.cloud_cover[i] || 0) + '%';
+
+  // Strip horaire : 8 prochaines heures avec icône ciel
   const end  = Math.min(startIdx + 8, h.time.length);
   const maxW = Math.max(...Array.from({length: end - startIdx}, (_,k) => +h.wind_speed_10m[startIdx+k] || 0), 1);
   let strip = '';
   for (let j = startIdx; j < end; j++) {
-    const w    = +h.wind_speed_10m[j] || 0;
-    const pct  = Math.round(w / maxW * 100);
-    const rain = +h.precipitation[j] || 0;
-    const hh   = fmtTime(h.time[j], { hour:'2-digit' });
+    const w   = +h.wind_speed_10m[j] || 0;
+    const pct = Math.round(w / maxW * 100);
+    const s   = skyCondition(h, j);
+    const hh  = fmtTime(h.time[j], { hour:'2-digit' });
+    const rainj = +h.precipitation[j] || 0;
+    const snowj = +h.snowfall[j] || 0;
+    let precip = '';
+    if (snowj > 0.05)      precip = `<div class="badge-snow">${num(snowj,1)}cm</div>`;
+    else if (rainj >= 0.1) precip = `<div class="w-hrain">${num(rainj,1)}</div>`;
     strip += `
       <div class="w-hour">
         <div class="w-htime">${hh}h</div>
+        <div class="w-hcc">${s.icon}</div>
         <div class="w-hwind">${num(w)}</div>
         <div class="w-hbar"><div class="w-hbar-fill" style="width:${pct}%"></div></div>
-        <div class="w-hrain">${rain >= 0.1 ? num(rain,1) : ''}</div>
+        ${precip}
       </div>`;
   }
   $('w-strip').innerHTML = strip;
@@ -641,19 +747,30 @@ function renderTable() {
   const limit = Math.min(startIdx + currentRange, h.time.length);
   let cum = 0, out = '';
   for (let j = startIdx; j < limit; j++) {
-    cum += +h.precipitation[j] || 0;
+    const precip = +h.precipitation[j] || 0;
+    const snow   = +h.snowfall[j] || 0;
+    cum += precip;
     const d   = new Date(h.time[j]);
     const day = d.toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit' });
     const hr  = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const sky = skyCondition(h, j);
     const isNow = j === startIdx;
+    // Pluie/neige dans tableau
+    const precipCell = snow > 0
+      ? `<span class="badge-snow">❄️ ${num(snow,1)}cm</span>`
+      : `${num(precip, 1)}`;
+    const cumCell = snow > 0
+      ? `<span style="color:var(--muted)">—</span>`
+      : num(cum, 1);
     out += `<tr class="${isNow ? 'row-now' : ''}">
       <td class="cell-time"><span class="cell-day">${day}</span><span class="cell-hr">${hr}</span></td>
       <td class="cell-temp">${num(h.temperature_2m[j], 1)}°</td>
       <td class="cell-wind">${num(h.wind_speed_10m[j])}</td>
       <td class="cell-gust">${num(h.wind_gusts_10m[j])}</td>
       <td class="cell-dir">${dir(h.wind_direction_10m[j])}</td>
-      <td class="cell-rain">${num(h.precipitation[j], 1)}</td>
-      <td class="cell-rain">${num(cum, 1)}</td>
+      <td class="cell-rain">${precipCell}</td>
+      <td class="cell-rain">${cumCell}</td>
+      <td style="font-size:18px" title="${sky.label}">${sky.icon}</td>
       <td class="cell-cc">${num(h.cloud_cover[j])}%</td>
       <td class="cell-cape">${num(h.cape[j])}</td>
     </tr>`;
